@@ -1,25 +1,24 @@
 local M = {}
 
 M.config = {
-	regex = {},
 	event = {},
+	ft = {},
+	regex = {},
 }
 
-M._ReplaceStrings = function(opts)
-	for _, pair in ipairs(opts) do
-		local string1, string2 = pair[1], pair[2]
-		vim.api.nvim_command(string.format("silent! %%s/%s/%s/g", string1, string2))
-	end
-end
-
 M._CreateAutocmds = function(opts)
-	for file_types, file_patterns in pairs(opts.regex) do
-		file_types = vim.split(file_types, "|||")
-		for _, file_type in ipairs(file_types) do
+	for _, regex_item in ipairs(opts.regex) do
+		local old_str, new_str, ft = regex_item[1], regex_item[2], regex_item[3] or opts.ft
+
+		if #regex_item ~= 2 and #regex_item ~= 3 then
+			vim.api.nvim_out_write(
+				"Invalid length of REGEX. It should be either 2 or 3 for {" .. table.concat(regex_item, ", ") .. "}\n"
+			)
+		else
 			vim.api.nvim_create_autocmd(opts.event, {
-				pattern = { file_type },
+				pattern = ft,
 				callback = function()
-					M._ReplaceStrings(file_patterns)
+					vim.api.nvim_command(string.format("silent! %%s/%s/%s/g", old_str, new_str))
 				end,
 			})
 		end
